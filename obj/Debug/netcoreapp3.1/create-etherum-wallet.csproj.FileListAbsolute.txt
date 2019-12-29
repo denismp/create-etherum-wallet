@@ -1,0 +1,11 @@
+/Users/denisputnam/git/create-etherum-wallet/bin/Debug/netcoreapp3.1/create-etherum-wallet
+/Users/denisputnam/git/create-etherum-wallet/bin/Debug/netcoreapp3.1/create-etherum-wallet.deps.json
+/Users/denisputnam/git/create-etherum-wallet/bin/Debug/netcoreapp3.1/create-etherum-wallet.runtimeconfig.json
+/Users/denisputnam/git/create-etherum-wallet/bin/Debug/netcoreapp3.1/create-etherum-wallet.runtimeconfig.dev.json
+/Users/denisputnam/git/create-etherum-wallet/bin/Debug/netcoreapp3.1/create-etherum-wallet.dll
+/Users/denisputnam/git/create-etherum-wallet/bin/Debug/netcoreapp3.1/create-etherum-wallet.pdb
+/Users/denisputnam/git/create-etherum-wallet/obj/Debug/netcoreapp3.1/create-etherum-wallet.csprojAssemblyReference.cache
+/Users/denisputnam/git/create-etherum-wallet/obj/Debug/netcoreapp3.1/create-etherum-wallet.AssemblyInfoInputs.cache
+/Users/denisputnam/git/create-etherum-wallet/obj/Debug/netcoreapp3.1/create-etherum-wallet.AssemblyInfo.cs
+/Users/denisputnam/git/create-etherum-wallet/obj/Debug/netcoreapp3.1/create-etherum-wallet.dll
+/Users/denisputnam/git/create-etherum-wallet/obj/Debug/netcoreapp3.1/create-etherum-wallet.pdb
