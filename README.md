@@ -21,7 +21,7 @@ using Newtonsoft.Json;
 using NBitcoin;
 using Rijndael256
 
-What I actually ran:
+History of what I actually ran:
   501  dotnet add package System
   502  dotnet add package System.Console
   503  dotnet add package System.Collections
