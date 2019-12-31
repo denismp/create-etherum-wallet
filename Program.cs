@@ -15,7 +15,7 @@ namespace Wallets
 {
     class EthereumWallet
     {
-        const string network = ""; // TODO: Specify wich network you are going to use.
+        const string network = "https://ropsten.infura.io/v3/2c64faa795c242d083706a5e3105e830"; // TODO: Specify wich network you are going to use.
         const string workingDirectory = @"Wallets\"; // Path where you want to store the Wallets
 
         static void Main(string[] args)
@@ -36,7 +36,9 @@ namespace Wallets
 
 
             // TODO: Initialize the Web3 instance and create the Storage Directory
-         
+            Web3 web3 = new Web3(network);
+            Directory.CreateDirectory(workingDirectory); // Path to the directory containing Wallets
+
             while (!input.ToLower().Equals("exit"))
             {
                 if (!isWalletReady) // User still doesn't have an wallet.
@@ -76,7 +78,7 @@ namespace Wallets
                         case "exit":
                             return;
                     }
-                } 
+                }
                 else // Already having loaded Wallet
                 {
                     string[] walletAvailableOperations = {
@@ -252,11 +254,14 @@ namespace Wallets
         public static Wallet CreateWallet(string password, string pathfile)
         {
             // TODO: Create brand-new wallet and get all the Words that were used.
+            Wallets wallet = new Wallets(Wordlist.English, WordCount.Twelve);
+            string words = string.Join(" ", wallet.Words);
 
             string fileName = string.Empty;
             try
             {
                 // TODO: Save the Wallet in the desired Directory.
+                fileName = SaveWalletToJsonFile(wallet, password, pathfile);
             }
             catch (Exception e)
             {
@@ -267,49 +272,172 @@ namespace Wallets
             WriteLine("New Wallet was created successfully!");
             WriteLine("Write down the following mnemonic words and keep them in the save place.");
             // TODO: Display the Words here.
+            WriteLine(words);
             WriteLine("Seed: ");
             // TODO: Display the Seed here.
+            WriteLine(wallet.Seed);
             WriteLine();
             // TODO: Implement and use PrintAddressesAndKeys to print all the Addresses and Keys.
+            PrintAddressesAndKeys(wallet);
 
             return wallet;
         }
         private static void PrintAddressesAndKeys(Wallet wallet)
         {
             // TODO: Print all the Addresses and the coresponding Private Keys.
+            WriteLine("Addresses:");
+            for (int i = 0; i < 20; i++)
+            {
+                WriteLine(wallet.GetAccount(i).Address);
+            }
+
+            WriteLine();
+            WriteLine("Private Keys:");
+            for (int i = 0; i < 20; i++)
+            {
+                WriteLine(wallet.GetAccount(i).PrivateKey);
+            }
+
+            WriteLine();
         }
         private static string SaveWalletToJsonFile(Wallet wallet, string password, string pathfile)
         {
             //TODO: Encrypt and Save the Wallet to JSON.
+            string words = string.Join(" ", wallet.Words);
+            var encryptedWords = Rijndael.Encrypt(words, password, KeySize.Aes256);
+            string date = DateTime.Now.ToString();
+            //  Anonymous object containing encryptedWords and date will be written in the Json file
+            var walletJsonData = new { encryptedWords = encryptedWords, date = date };
+            string json = JsonConvert.SerializedObject(walletJsonData);
+            Random random = new Random();
+            var fileName =
+                "EthereumWallet_"
+                + DateTime.Now.Year + "-"
+                + DateTime.Now.Month + "-"
+                + DateTime.Now.Day + "_"
+                + DateTime.Now.Hour + "-"
+                + DateTime.Now.Minute + "-"
+                + DateTime.Now.Second + "-"
+                + random.Next(0, 10000) + ".json";
+            File.WriteAllText(Path.Combine(pathfile, fileName), json);
+            File.WriteAllText($"Wallet saved in file: {fileName}");
+            return fileName;
         }
 
         private static Wallet LoadWalletFromJsonFile(string nameOfWalletFile, string path, string pass)
         {
             //TODO: Implement the logic that is needed to Load and Wallet from JSON.
+            string pathToFile = Path.Combine(path, nameOfWalletFile);
+            string words = string.Empty;
+            // Read from fileName
+            WriteLine($"Read from {pathToFile}");
+            try
+            {
+                string line = File.ReadAllText(pathToFile);
+                dynamic results = JsonConvert.DeserializedObject<dynamic>(line);
+                string encryptedWords = results.encryptedWords;
+                words = Rijndael.Decrypt(encryptedWords, pass, KeySize.Aes256);
+                string dataAndTime = results.date;
+            }
+            catch (Exception e)
+            {
+                WriteLine("ERROR!" + e);
+            }
+
+            return Recover(words);
         }
         private static Wallet Recover(string words)
         {
             // TODO: Recover a Wallet from existing mnemonic phrase (words).
+            Wallets wallet = new Wallets(words, null);
+            WriteLine("Wallet was successfully recovered.");
+            WriteLine("Words: " + string.Join(" ", wallet.Words));
+            WriteLine("Seed: " + string.Join(" ", wallet.Seed));
+            WriteLine();
+            PrintAddressesAndKeys(wallet);
+            return wallet;
         }
 
         public static Wallet RecoverFromMnemonicPhraseAndSaveToJson(string words, string password, string pathfile)
         {
-           // TODO: Recover from Mnemonic phrases and Save to JSON.
+            // TODO: Recover from Mnemonic phrases and Save to JSON.
+            Wallets wallet = Recover(words);
+            string fileName = string.Empty;
+            try
+            {
+                fileName = SaveWalletToJsonFile(words, password, pathfile);
+            }
+            catch (Exception)
+            {
+                WriteLine($"ERROR!  The file {fileName} with recovered wallet can't be saved!");
+                throw;
+            }
+            return wallet;
         }
 
         public static void Receive(Wallet wallet)
         {
             // TODO: Print all avaiable addresses in Wallet.
+            if (wallet.GetAddresses().Count() > 0)
+            {
+                for (int i = 0; i < 20; i++)
+                {
+                    WriteLine(wallet.GetAccount(i).Address);
+                }
+
+                WriteLine();
+            }
+            else
+            {
+                WriteLine("No addresses found!");
+            }
         }
         private static async Task Send(Wallet wallet, string fromAddress, string toAddress, double amountOfCoins)
         {
             // TODO: Generate and Send a transaction.
+            Account accountFrom = wallet.GetAccount(fromAddress);
+            string privateKeyFrom = accountFrom.PrivateKey;
+            if (privateKeyFrom == string.Empty)
+            {
+                WriteLine("Address sending coins is not from current wallet!");
+                throw new Exception("Address sending coins is not from current wallet!");
+            }
+
+            var web3 = new Web3(accountFrom, network);
+            var wei = Web3.Convert.ToWei(amountOfCoins);
+            try
+            {
+                var transaction = 
+                        await web3.TransactionManager
+                        .SendTransactionAsync(
+                            accountFrom.Address,
+                            toAddress,
+                            new Nethereum.Hex.HexTypes.HexBigInteger(wei)
+                        );
+                WriteLine("Transaction has been sent successfully!");
+
+            }
+            catch (Exception e)
+            {
+                WriteLine($"ERROR!  The transaction can't be completed!  {e}");
+                throw e;
+            }
         }
         private static async Task Balance(Web3 web3, Wallet wallet)
         {
             // TODO: Print all addresses and their balance. Print the Total Balance of the Wallet as well.
+            decimal totalBalance = 0.0m;
+            for (int i = 0; i < 20; i++)
+            {
+                var balance = await web3.Eth.GetBalance.SendRequestAsync(wallet.GetAccount(i).Address);
+                var etherAmount = Web3.Convert.FromWei(balance.Value);
+                totalBalance += etherAmount;
+                WriteLine(wallet.GetAccount(i).Address + " " + etherAmount + " ETH");
+            }
+
+            WriteLine($"Total balance: {totalBalance} ETH \n");
         }
-      
+
     }
 }
 
