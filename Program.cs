@@ -254,7 +254,7 @@ namespace Wallets
         public static Wallet CreateWallet(string password, string pathfile)
         {
             // TODO: Create brand-new wallet and get all the Words that were used.
-            Wallets wallet = new Wallets(Wordlist.English, WordCount.Twelve);
+            Wallet wallet = new Wallet(Wordlist.English, WordCount.Twelve);
             string words = string.Join(" ", wallet.Words);
 
             string fileName = string.Empty;
@@ -308,7 +308,7 @@ namespace Wallets
             string date = DateTime.Now.ToString();
             //  Anonymous object containing encryptedWords and date will be written in the Json file
             var walletJsonData = new { encryptedWords = encryptedWords, date = date };
-            string json = JsonConvert.SerializedObject(walletJsonData);
+            string json = JsonConvert.SerializeObject(walletJsonData);
             Random random = new Random();
             var fileName =
                 "EthereumWallet_"
@@ -320,7 +320,7 @@ namespace Wallets
                 + DateTime.Now.Second + "-"
                 + random.Next(0, 10000) + ".json";
             File.WriteAllText(Path.Combine(pathfile, fileName), json);
-            File.WriteAllText($"Wallet saved in file: {fileName}");
+            WriteLine($"Wallet saved in file: {fileName}");
             return fileName;
         }
 
@@ -334,7 +334,7 @@ namespace Wallets
             try
             {
                 string line = File.ReadAllText(pathToFile);
-                dynamic results = JsonConvert.DeserializedObject<dynamic>(line);
+                dynamic results = JsonConvert.DeserializeObject<dynamic>(line);
                 string encryptedWords = results.encryptedWords;
                 words = Rijndael.Decrypt(encryptedWords, pass, KeySize.Aes256);
                 string dataAndTime = results.date;
@@ -349,7 +349,7 @@ namespace Wallets
         private static Wallet Recover(string words)
         {
             // TODO: Recover a Wallet from existing mnemonic phrase (words).
-            Wallets wallet = new Wallets(words, null);
+            Wallet wallet = new Wallet(words, null);
             WriteLine("Wallet was successfully recovered.");
             WriteLine("Words: " + string.Join(" ", wallet.Words));
             WriteLine("Seed: " + string.Join(" ", wallet.Seed));
@@ -361,11 +361,11 @@ namespace Wallets
         public static Wallet RecoverFromMnemonicPhraseAndSaveToJson(string words, string password, string pathfile)
         {
             // TODO: Recover from Mnemonic phrases and Save to JSON.
-            Wallets wallet = Recover(words);
+            Wallet wallet = Recover(words);
             string fileName = string.Empty;
             try
             {
-                fileName = SaveWalletToJsonFile(words, password, pathfile);
+                fileName = SaveWalletToJsonFile(wallet, password, pathfile);
             }
             catch (Exception)
             {
