@@ -16,7 +16,7 @@ namespace Wallets
     class EthereumWallet
     {
         const string network = "https://ropsten.infura.io/v3/2c64faa795c242d083706a5e3105e830"; // TODO: Specify wich network you are going to use.
-        const string workingDirectory = @"Wallets\"; // Path where you want to store the Wallets
+        const string workingDirectory = @"Wallets"; // Path where you want to store the Wallets
 
         static void Main(string[] args)
         {
